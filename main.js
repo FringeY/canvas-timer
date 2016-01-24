@@ -139,12 +139,16 @@ var canvasChars = [
 
 var canvasTimer = (function () {
     var Canvas, Context, Interval, Radius, lastTime,
-        isStop = false,
-        date = new Date();
+        isStop = false;
+    git
     var init = function (canvasObj, interval, radius) {
         Canvas = canvasObj || document.getElementsByTagName('canvas')[0]; //获取canvas对象
+        //设置画布高度为canvas父级的高度
+        Canvas.height = parseInt((Canvas.parentNode.currentStyle ? Canvas.parentNode.currentStyle : window.getComputedStyle(Canvas.parentNode, null)).height);
+        //设置画布高度为canvas父级的宽度
+        Canvas.width = parseInt((Canvas.parentNode.currentStyle ? Canvas.parentNode.currentStyle : window.getComputedStyle(Canvas.parentNode, null)).width);
         Context = Canvas.getContext('2d');
-        Interval = interval || 50; //动画间隙默认50ms
+        Interval = interval || 20; //动画间隙默认50ms
         Radius = radius || 5; //点半径默认为5px
         run();
     };
@@ -164,28 +168,33 @@ var canvasTimer = (function () {
     };
 
     var getCurrentTime = function () {
-        return {
-            hour: date.getHours(),
-            min: date.getMinutes(),
-            seconds: date.getSeconds()
-        }
+        var date = new Date();
+        return [
+            parseInt(date.getHours()/10),
+            date.getHours()%10,
+            parseInt(date.getMinutes()/10),
+            date.getMinutes()%10,
+            parseInt(date.getSeconds()/10),
+            date.getSeconds()%10
+        ];
     };
     //渲染
     var _render = function () {
         var newTime = getCurrentTime();
-        Canvas.height = Canvas.height; //清空画布
-        Context.fillStyle = '#66CCFF';
-        String(hour).split('');
-        //for (var i = 0; i < canvasChars[newTime.hour * 1].length; i++) {
-            for (var j = 0; j < canvasChars[newTime.hour].length; j++) {
-                if (canvasChars[i][j] == 1) {
-                    Context.beginPath();
-                    Context.arc(10 + (2 * j + 1) * Radius + j, 10 + (2 * i + 1) * Radius + i, Radius, 0, 2*Math.PI);
-                    Context.fill();
-                    Context.closePath();
+        Context.clearRect(0, 0, Canvas.width, Canvas.height); //清空画布
+        Context.fillStyle = '#000';
+        for (var i = 0; i < newTime.length; i++) {
+            for (var j = 0; j < canvasChars[newTime[i]].length; j++) {
+                for (var k = 0; k < canvasChars[newTime[i]][j].length; k++) {
+                    if (canvasChars[newTime[i]][j][k] == 1) {
+                        Context.beginPath();
+                        Context.arc(10 + (14 * (Radius + 1) + 10) * i + (2 * k + 1) * Radius + k, 10 + (2 * j + 1) * Radius + j, Radius, 0, 2*Math.PI);
+                        Context.closePath();
+                        Context.fill();
+                    }
                 }
             }
-        //}
+        }
     };
     //更新要渲染的数据
     var _update = function () {
