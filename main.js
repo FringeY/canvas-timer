@@ -80,7 +80,7 @@ var canvasChars = [
         [0,0,1,1,0,0,0],
         [0,1,1,0,0,0,0],
         [1,1,0,0,0,0,0],
-        [1,1,0,1,1,1,0],
+        [1,1,1,1,1,1,0],
         [1,1,0,0,0,1,1],
         [1,1,0,0,0,1,1],
         [1,1,0,0,0,1,1],
@@ -138,9 +138,10 @@ var canvasChars = [
 ];
 
 var canvasTimer = (function () {
-    var Canvas, Context, Interval, Radius, lastTime,
+    var Canvas, Context, Interval, Radius, lastTime, nowTime,
+        timeMatrix = [], //时间矩阵
         isStop = false;
-    git
+
     var init = function (canvasObj, interval, radius) {
         Canvas = canvasObj || document.getElementsByTagName('canvas')[0]; //获取canvas对象
         //设置画布高度为canvas父级的高度
@@ -158,8 +159,8 @@ var canvasTimer = (function () {
             if (isStop) {
                 return false;
             }
+            _update();
             _render();
-            //_update();
         }, Interval);
     };
 
@@ -172,21 +173,24 @@ var canvasTimer = (function () {
         return [
             parseInt(date.getHours()/10),
             date.getHours()%10,
+            10, //:
             parseInt(date.getMinutes()/10),
             date.getMinutes()%10,
+            10, //:
             parseInt(date.getSeconds()/10),
             date.getSeconds()%10
         ];
     };
     //渲染
     var _render = function () {
-        var newTime = getCurrentTime();
         Context.clearRect(0, 0, Canvas.width, Canvas.height); //清空画布
         Context.fillStyle = '#000';
-        for (var i = 0; i < newTime.length; i++) {
-            for (var j = 0; j < canvasChars[newTime[i]].length; j++) {
-                for (var k = 0; k < canvasChars[newTime[i]][j].length; k++) {
-                    if (canvasChars[newTime[i]][j][k] == 1) {
+
+        // 渲染时间
+        for (var i = 0; i < nowTime.length; i++) {
+            for (var j = 0; j < canvasChars[nowTime[i]].length; j++) {
+                for (var k = 0; k < canvasChars[nowTime[i]][j].length; k++) {
+                    if (canvasChars[nowTime[i]][j][k] == 1) {
                         Context.beginPath();
                         Context.arc(10 + (14 * (Radius + 1) + 10) * i + (2 * k + 1) * Radius + k, 10 + (2 * j + 1) * Radius + j, Radius, 0, 2*Math.PI);
                         Context.closePath();
@@ -198,8 +202,15 @@ var canvasTimer = (function () {
     };
     //更新要渲染的数据
     var _update = function () {
+        nowTime = getCurrentTime();
 
+        for (var i = 0; i < canvasChars[0].length; i++) {
+            for (var j = 0; j < nowTime.length; j++) {
+                timeMatrix[i] = timeMatrix[i] ? timeMatrix[i].concat(canvasChars[nowTime[j]][i]) : canvasChars[nowTime[j]][i];
+            }
+        }
     };
+
     return {
         init: init,
         stop: stop
