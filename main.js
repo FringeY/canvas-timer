@@ -138,8 +138,10 @@ var canvasChars = [
 ];
 
 var canvasTimer = (function () {
-    var Canvas, Context, Interval, Radius, lastTime, nowTime,
-        timeMatrix = [], //时间矩阵
+    var Canvas, Context, Interval, Radius, nowTime,
+        lastTimeMatrix = [],
+        timeMatrix = [],      //时间矩阵
+        balls = [],           //动画小球
         isStop = false;
 
     var init = function (canvasObj, interval, radius) {
@@ -149,7 +151,7 @@ var canvasTimer = (function () {
         //设置画布高度为canvas父级的宽度
         Canvas.width = parseInt((Canvas.parentNode.currentStyle ? Canvas.parentNode.currentStyle : window.getComputedStyle(Canvas.parentNode, null)).width);
         Context = Canvas.getContext('2d');
-        Interval = interval || 20; //动画间隙默认50ms
+        Interval = interval || 50; //动画间隙默认50ms
         Radius = radius || 5; //点半径默认为5px
         run();
     };
@@ -170,6 +172,7 @@ var canvasTimer = (function () {
 
     var getCurrentTime = function () {
         var date = new Date();
+
         return [
             parseInt(date.getHours()/10),
             date.getHours()%10,
@@ -184,10 +187,11 @@ var canvasTimer = (function () {
     //渲染
     var _render = function () {
         Context.clearRect(0, 0, Canvas.width, Canvas.height); //清空画布
-        Context.fillStyle = '#000';
+
 
         // 渲染时间
         for (var i = 0; i < timeMatrix.length; i++) {
+            Context.fillStyle = '#000';
             for (var j = 0; j < timeMatrix[i].length; j++) {
                 if (timeMatrix[i][j] == 1) {
                     Context.beginPath();
@@ -197,14 +201,66 @@ var canvasTimer = (function () {
                 }
             }
         }
+
+        // 渲染小球
+        //console.log(animateMatrix);
+        //console.log(balls);
+        for (var i = 0; i < balls.length; i++) {
+            Context.fillStyle = '#000';
+            Context.beginPath();
+            Context.arc(balls[i].x, balls[i].y, Radius, 0, 2*Math.PI);
+            Context.closePath();
+            Context.fill();
+        }
+        console.log(balls.length);
     };
     //更新要渲染的数据
     var _update = function () {
         nowTime = getCurrentTime();
         timeMatrix = [];
+
         for (var i = 0; i < canvasChars[0].length; i++) {
             for (var j = 0; j < nowTime.length; j++) {
                 timeMatrix[i] = timeMatrix[i] ? timeMatrix[i].concat(canvasChars[nowTime[j]][i]) : canvasChars[nowTime[j]][i];
+            }
+        }
+
+        //时间变化时产生小球{x: x轴距离, y: y轴距离, vx: x轴速度, vy: y轴速度, g: y轴加速度}
+        if (lastTimeMatrix.length != 0) {
+            for (var i = 0; i < lastTimeMatrix.length; i++) {
+                for (var j = 0; j < lastTimeMatrix[i].length; j++) {
+                    if (lastTimeMatrix[i][j] == 1 && timeMatrix[i][j] == 0) {
+                        balls.push({
+                            x: 10 + (2 * j + 1) * Radius + j,
+                            y: 10 + (2 * i + 1) * Radius + i,
+                            vx: (Math.random() * 50 + 50) * (Math.random() > 0.5 ? 1 : -1),
+                            vy: 0,
+                            g: 500
+                        });
+                    }
+                    lastTimeMatrix[i][j] = timeMatrix[i][j];
+                }
+            }
+        } else {
+            lastTimeMatrix = timeMatrix;
+        }
+
+        //改变小球状态
+        for (var i = 0; i < balls.length; i++) {
+            var y = balls[i].y + balls[i].vy * Interval/1000 + 1/2 * balls[i].g * Math.pow(Interval/1000, 2);
+            balls[i].x = balls[i].x + balls[i].vx * Interval/1000;
+            balls[i].y = (y > Canvas.height ? Canvas.height : y);
+
+            //小球反弹
+            if (balls[i].y == Canvas.height) {
+                balls[i].vy = balls[i].vy * -(Math.random() * 0.3 + 0.5);
+            } else {
+                balls[i].vy = balls[i].vy + balls[i].g * Interval / 1000;
+            }
+
+            //小球超出可见区域,删除小球
+            if (balls[i].x + Radius < 0 || balls[i].x - Radius > Canvas.width) {
+                balls.splice(i, 1);
             }
         }
     };
