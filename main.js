@@ -139,10 +139,10 @@ var canvasChars = [
 
 var canvasTimer = (function () {
     var Canvas, Context, Interval, Radius, nowTime,
-        lastTimeMatrix = [],
+        lastTimeMatrix = [],  //上一个时间点的时间矩阵
         timeMatrix = [],      //时间矩阵
         balls = [],           //动画小球
-        isStop = false;
+        isStop = false;       //是否停止动画
 
     var init = function (canvasObj, interval, radius) {
         Canvas = canvasObj || document.getElementsByTagName('canvas')[0]; //获取canvas对象
@@ -151,8 +151,8 @@ var canvasTimer = (function () {
         //设置画布高度为canvas父级的宽度
         Canvas.width = parseInt((Canvas.parentNode.currentStyle ? Canvas.parentNode.currentStyle : window.getComputedStyle(Canvas.parentNode, null)).width);
         Context = Canvas.getContext('2d');
-        Interval = interval || 50; //动画间隙默认50ms
-        Radius = radius || 5; //点半径默认为5px
+        Interval = interval || 50;          //动画间隙默认50ms
+        Radius = radius || 5;               //球半径默认为5px
         run();
     };
 
@@ -172,7 +172,6 @@ var canvasTimer = (function () {
 
     var getCurrentTime = function () {
         var date = new Date();
-
         return [
             parseInt(date.getHours()/10),
             date.getHours()%10,
@@ -184,10 +183,10 @@ var canvasTimer = (function () {
             date.getSeconds()%10
         ];
     };
+
     //渲染
     var _render = function () {
         Context.clearRect(0, 0, Canvas.width, Canvas.height); //清空画布
-
 
         // 渲染时间
         for (var i = 0; i < timeMatrix.length; i++) {
@@ -203,8 +202,6 @@ var canvasTimer = (function () {
         }
 
         // 渲染小球
-        //console.log(animateMatrix);
-        //console.log(balls);
         for (var i = 0; i < balls.length; i++) {
             Context.fillStyle = '#000';
             Context.beginPath();
@@ -212,13 +209,13 @@ var canvasTimer = (function () {
             Context.closePath();
             Context.fill();
         }
-        console.log(balls.length);
     };
     //更新要渲染的数据
     var _update = function () {
         nowTime = getCurrentTime();
         timeMatrix = [];
 
+        //生成时间矩阵
         for (var i = 0; i < canvasChars[0].length; i++) {
             for (var j = 0; j < nowTime.length; j++) {
                 timeMatrix[i] = timeMatrix[i] ? timeMatrix[i].concat(canvasChars[nowTime[j]][i]) : canvasChars[nowTime[j]][i];
@@ -226,6 +223,7 @@ var canvasTimer = (function () {
         }
 
         //时间变化时产生小球{x: x轴距离, y: y轴距离, vx: x轴速度, vy: y轴速度, g: y轴加速度}
+        //当上一个时间点矩阵某一值由1变为0时,生成小球,做随机抛物线运动
         if (lastTimeMatrix.length != 0) {
             for (var i = 0; i < lastTimeMatrix.length; i++) {
                 for (var j = 0; j < lastTimeMatrix[i].length; j++) {
@@ -245,7 +243,7 @@ var canvasTimer = (function () {
             lastTimeMatrix = timeMatrix;
         }
 
-        //改变小球状态
+        //更新小球状态
         for (var i = 0; i < balls.length; i++) {
             var y = balls[i].y + balls[i].vy * Interval/1000 + 1/2 * balls[i].g * Math.pow(Interval/1000, 2);
             balls[i].x = balls[i].x + balls[i].vx * Interval/1000;
