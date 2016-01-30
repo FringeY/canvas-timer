@@ -187,15 +187,13 @@ var canvasTimer = (function () {
         Context.fillStyle = '#000';
 
         // 渲染时间
-        for (var i = 0; i < nowTime.length; i++) {
-            for (var j = 0; j < canvasChars[nowTime[i]].length; j++) {
-                for (var k = 0; k < canvasChars[nowTime[i]][j].length; k++) {
-                    if (canvasChars[nowTime[i]][j][k] == 1) {
-                        Context.beginPath();
-                        Context.arc(10 + (14 * (Radius + 1) + 10) * i + (2 * k + 1) * Radius + k, 10 + (2 * j + 1) * Radius + j, Radius, 0, 2*Math.PI);
-                        Context.closePath();
-                        Context.fill();
-                    }
+        for (var i = 0; i < timeMatrix.length; i++) {
+            for (var j = 0; j < timeMatrix[i].length; j++) {
+                if (timeMatrix[i][j] == 1) {
+                    Context.beginPath();
+                    Context.arc(10 + (2 * j + 1) * Radius + j, 10 + (2 * i + 1) * Radius + i, Radius, 0, 2*Math.PI);
+                    Context.closePath();
+                    Context.fill();
                 }
             }
         }
@@ -203,7 +201,7 @@ var canvasTimer = (function () {
     //更新要渲染的数据
     var _update = function () {
         nowTime = getCurrentTime();
-
+        timeMatrix = [];
         for (var i = 0; i < canvasChars[0].length; i++) {
             for (var j = 0; j < nowTime.length; j++) {
                 timeMatrix[i] = timeMatrix[i] ? timeMatrix[i].concat(canvasChars[nowTime[j]][i]) : canvasChars[nowTime[j]][i];
