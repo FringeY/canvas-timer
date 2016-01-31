@@ -137,14 +137,16 @@ var canvasChars = [
     ]//:
 ];
 
+var ballColors = ['#666666', '#FF9966', '#FFCC66', '#66CC66', '#66CCCC', '#9999CC', '#CCCCCC', '#FFCCCC', '#6666CC'];
+
 var canvasTimer = (function () {
-    var Canvas, Context, Interval, Radius, nowTime,
+    var Canvas, Context, Interval, Radius, nowTime, MarginLeft, MarginTop, timeColor,
         lastTimeMatrix = [],  //上一个时间点的时间矩阵
         timeMatrix = [],      //时间矩阵
         balls = [],           //动画小球
         isStop = false;       //是否停止动画
 
-    var init = function (canvasObj, interval, radius) {
+    var init = function (canvasObj, interval, radius, marginleft, margintop, timecolor) {
         Canvas = canvasObj || document.getElementsByTagName('canvas')[0]; //获取canvas对象
         //设置画布高度为canvas父级的高度
         Canvas.height = parseInt((Canvas.parentNode.currentStyle ? Canvas.parentNode.currentStyle : window.getComputedStyle(Canvas.parentNode, null)).height);
@@ -153,21 +155,21 @@ var canvasTimer = (function () {
         Context = Canvas.getContext('2d');
         Interval = interval || 50;          //动画间隙默认50ms
         Radius = radius || 5;               //球半径默认为5px
+        MarginLeft = marginleft || 10;      //左间距
+        MarginTop = margintop || 10;        //右间距
+        timeColor = timecolor || '#666666'; //背景时间颜色
         run();
     };
 
     var run = function () {
         setInterval(function () {
-            if (isStop) {
-                return false;
-            }
             _update();
             _render();
         }, Interval);
     };
 
     var stop = function () {
-
+        isStop = true;
     };
 
     var getCurrentTime = function () {
@@ -190,7 +192,7 @@ var canvasTimer = (function () {
 
         // 渲染时间
         for (var i = 0; i < timeMatrix.length; i++) {
-            Context.fillStyle = '#000';
+            Context.fillStyle = timeColor;
             for (var j = 0; j < timeMatrix[i].length; j++) {
                 if (timeMatrix[i][j] == 1) {
                     Context.beginPath();
@@ -203,13 +205,14 @@ var canvasTimer = (function () {
 
         // 渲染小球
         for (var i = 0; i < balls.length; i++) {
-            Context.fillStyle = '#000';
+            Context.fillStyle = balls[i].color;
             Context.beginPath();
             Context.arc(balls[i].x, balls[i].y, Radius, 0, 2*Math.PI);
             Context.closePath();
             Context.fill();
         }
     };
+
     //更新要渲染的数据
     var _update = function () {
         nowTime = getCurrentTime();
@@ -224,7 +227,7 @@ var canvasTimer = (function () {
 
         //时间变化时产生小球{x: x轴距离, y: y轴距离, vx: x轴速度, vy: y轴速度, g: y轴加速度}
         //当上一个时间点矩阵某一值由1变为0时,生成小球,做随机抛物线运动
-        if (lastTimeMatrix.length != 0) {
+        if (lastTimeMatrix.length != 0 && !isStop) {
             for (var i = 0; i < lastTimeMatrix.length; i++) {
                 for (var j = 0; j < lastTimeMatrix[i].length; j++) {
                     if (lastTimeMatrix[i][j] == 1 && timeMatrix[i][j] == 0) {
@@ -233,13 +236,14 @@ var canvasTimer = (function () {
                             y: 10 + (2 * i + 1) * Radius + i,
                             vx: (Math.random() * 50 + 50) * (Math.random() > 0.5 ? 1 : -1),
                             vy: 0,
-                            g: 500
+                            g: 500,
+                            color: ballColors[Math.floor(Math.random() * ballColors.length)]
                         });
                     }
                     lastTimeMatrix[i][j] = timeMatrix[i][j];
                 }
             }
-        } else {
+        } else if (!isStop) {
             lastTimeMatrix = timeMatrix;
         }
 
@@ -247,10 +251,10 @@ var canvasTimer = (function () {
         for (var i = 0; i < balls.length; i++) {
             var y = balls[i].y + balls[i].vy * Interval/1000 + 1/2 * balls[i].g * Math.pow(Interval/1000, 2);
             balls[i].x = balls[i].x + balls[i].vx * Interval/1000;
-            balls[i].y = (y > Canvas.height ? Canvas.height : y);
+            balls[i].y = (y > Canvas.height - Radius ? Canvas.height - Radius : y);
 
             //小球反弹
-            if (balls[i].y == Canvas.height) {
+            if (balls[i].y == Canvas.height - Radius) {
                 balls[i].vy = balls[i].vy * -(Math.random() * 0.3 + 0.5);
             } else {
                 balls[i].vy = balls[i].vy + balls[i].g * Interval / 1000;
